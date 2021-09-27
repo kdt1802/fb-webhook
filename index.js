@@ -1,21 +1,26 @@
 // Sets server port and logs message on success
-const express = require('express')
-const app = express()
+const express = require('express');
+const axios = require('axios').default;
+const app = express();
 app.use(express.json());
 const http = require('http').Server(app);
 const io = require('socket.io')(http, {
   cors: {
-      origins: '*'
+    origins: '*'
   }
 });
 const port = process.env.PORT || 3000;
+
+const GHTK_URL = 'https://services.ghtklab.com';
+axios.defaults.headers.common['Token'] = '43f9033d4917F4C0254cd2585a61aB81eBbeF33f';
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
 // io.on('connection', (socket) => {
-//   socket.on('chat message', msg => {
+//   socket.on('chat message', (msg) => {
 //     io.emit('chat message', msg);
 //   });
 // });
@@ -65,6 +70,27 @@ app.get('/webhook', (req, res) => {
       res.sendStatus(403);
     }
   }
+});
+
+app.post('/getAddressL4', (req, res) => {
+  axios
+    .get(GHTK_URL + '/services/address/getAddressLevel4', {
+      params: req.body
+    })
+    .then((response) => {
+      console.log(response.data);
+
+      if (response.data.success) {
+        res.status(200);
+      } else {
+        res.status(400);
+      }
+      res.send(response.data);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(400).send(error);
+    });
 });
 
 http.listen(port, () => {
