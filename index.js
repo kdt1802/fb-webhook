@@ -1,8 +1,11 @@
 // Sets server port and logs message on success
 const express = require('express');
+const cors = require('cors');
 const axios = require('axios').default;
 const app = express();
 app.use(express.json());
+app.use(cors());
+app.options('*', cors());
 const http = require('http').Server(app);
 const io = require('socket.io')(http, {
   cors: {
@@ -72,11 +75,17 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-app.post('/getAddressL4', (req, res) => {
-  axios
-    .get(GHTK_URL + '/services/address/getAddressLevel4', {
-      params: req.body
-    })
+app.post('/ghtk', (req, res) => {
+  const url = req.body.url;
+  const method = req.body.method;
+  const params = req.body.params ? req.body.params : {};
+  const data = req.body.data ? req.body.data : {};
+  axios({
+    url: url,
+    method: method,
+    params: params,
+    data: data
+  })
     .then((response) => {
       console.log(response.data);
 
@@ -91,6 +100,10 @@ app.post('/getAddressL4', (req, res) => {
       console.error(error);
       res.status(400).send(error);
     });
+
+  // axios.get(GHTK_URL + '/services/address/getAddressLevel4', {
+  //   params: req.body
+  // });
 });
 
 http.listen(port, () => {
