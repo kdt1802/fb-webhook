@@ -15,7 +15,6 @@ const io = require('socket.io')(http, {
 const port = process.env.PORT || 3000;
 
 const GHTK_URL = 'https://services.ghtklab.com';
-axios.defaults.headers.common['Token'] = '43f9033d4917F4C0254cd2585a61aB81eBbeF33f';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 app.get('/', (req, res) => {
@@ -77,12 +76,16 @@ app.get('/webhook', (req, res) => {
 
 app.post('/ghtk', (req, res) => {
   const url = req.body.url;
+  const token = req.body.token ? req.body.token : '';
   const method = req.body.method;
   const params = req.body.params ? req.body.params : {};
   const data = req.body.data ? req.body.data : {};
   axios({
     url: url,
     method: method,
+    headers: {
+      Token: token
+    },
     params: params,
     data: data
   })
@@ -98,7 +101,7 @@ app.post('/ghtk', (req, res) => {
     })
     .catch((error) => {
       console.error(error);
-      res.status(400).send(error);
+      res.status(400).send(error.message);
     });
 
   // axios.get(GHTK_URL + '/services/address/getAddressLevel4', {
