@@ -13,8 +13,7 @@ const io = require('socket.io')(http, {
   }
 });
 const port = process.env.PORT || 3000;
-
-const GHTK_URL = 'https://services.ghtklab.com';
+const GRAPH_API_URL = 'https://congty6.mobifone.vn/qss/graph';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 app.get('/', (req, res) => {
@@ -107,6 +106,45 @@ app.post('/ghtk', (req, res) => {
   // axios.get(GHTK_URL + '/services/address/getAddressLevel4', {
   //   params: req.body
   // });
+});
+
+const GHTK_WEBHOOK_SECRET = '123456aA@';
+app.post('/ghtkWebhook', (req, res) => {
+  let receivedParams = req.query;
+  if (receivedParams.hash != GHTK_WEBHOOK_SECRET) {
+    res.status(400).send('Mã Hash không chính xác');
+  } else {
+    let receivedBody = req.body;
+    let forwardBody = {
+      secret_key: GHTK_WEBHOOK_SECRET,
+      label_id: receivedBody.label_id ? receivedBody.label_id : '',
+      partner_id: receivedBody.label_id ? receivedBody.partner_id : '',
+      status_id: receivedBody.label_id ? receivedBody.status_id : '',
+      action_time: receivedBody.label_id ? receivedBody.action_time : '',
+      reason_code: receivedBody.label_id ? receivedBody.reason_code : '',
+      reason: receivedBody.label_id ? receivedBody.reason : '',
+      weight: receivedBody.label_id ? receivedBody.weight : '',
+      fee: receivedBody.label_id ? receivedBody.fee : '',
+      pick_money: receivedBody.label_id ? receivedBody.pick_money : '',
+      return_part_package: receivedBody.label_id ? receivedBody.return_part_package : ''
+    };
+
+    axios({
+      url: GRAPH_API_URL + '/ghtkWebhook?json=' + encodeURIComponent(JSON.stringify(forwardBody)),
+      method: 'post'
+    })
+      .then((response) => {
+        if (response.data.CODE == '200') {
+          res.status(200);
+        } else {
+          res.status(500);
+        }
+        res.send(response.data.MESSAGE);
+      })
+      .catch((err) => {
+        res.status(500).send('Có lỗi chuyển tiếp thông tin');
+      });
+  }
 });
 
 http.listen(port, () => {
